@@ -133,7 +133,7 @@ module Twitter::Stream
         # TODO: stream_as_strings
         
         def post_stream(params)
-            @client.post_form("https://stream.twitter.com/1.1/statuses/filter.json?", params) do |response|
+            @client.post("https://stream.twitter.com/1.1/statuses/filter.json?", form: params) do |response|
               while !response.body_io.closed?
                 # FIXME: break these two lines up into better, readable steps
                 string = response.body_io.gets("\r\n")

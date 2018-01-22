@@ -20,19 +20,19 @@ require "../models/response/tweet/top_level_tweet"
 # CONSIDER: Thread pool or queue for processing tweets
 module Twitter::Stream
     class Client < Twitter::Client
-        
+
         @include_retweets : Bool?
         @include_quotes : Bool?
         @include_replies : Bool?
-        
+
         def base_url
             "stream.twitter.com"
         end
-        
+
         def api_version
             "1.1"
         end
-        
+
         # TODO: Use enum/symbol/constant
         def exclude(*types)
             types.each do |type|
@@ -47,7 +47,7 @@ module Twitter::Stream
             end
             self
         end
-        
+
         # TODO: Use enum/symbol/constant
         def include(*types)
             types.each do |type|
@@ -62,26 +62,26 @@ module Twitter::Stream
             end
             self
         end
-        
+
         # Info regarding params: https://dev.twitter.com/streaming/overview/request-parameters
         # TODO: add and handle locations, delimited, & stall params
         # TODO: add options to exclude: retweets, quotes, replies
         # TODO: add options to only include: retweets, quotes, replies
         def stream(follow : Array(UInt64)? = nil, track : Array(String)? = nil)
             oauth()
-            
+
             params_check(follow, track)
-            
-            params = {} of String => (String | Nil)
-            
+
+            params = {} of String => String
+
             params["follow"] = follow.join(",") if follow
             params["track"] = track.join(",") if track
             params.compact! # Safekeeping
-            
+
             # TODO: verify that 2 lines below are necessary
             @client.connect_timeout = 60*60*24
             @client.read_timeout = 60*60*24
-            
+
             post_stream(params) do |line|
                 # puts JSON.parse(line).as_h.keys.inspect
                 # puts JSON.parse(line)["entities"]
@@ -95,17 +95,17 @@ module Twitter::Stream
                 #     puts JSON.parse(line)["quoted_status"].as_h.keys.inspect
                 #     puts JSON.parse(line)["quoted_status"]["entities"]
                 # end
-                
+
                 begin
-                    
+
                     # start = Time.now()
-                    tweet = Twitter::Response::TopLevelTweet.extended_new_while_streaming(JSON::PullParser.new(line)) 
+                    tweet = Twitter::Response::TopLevelTweet.extended_new_while_streaming(JSON::PullParser.new(line))
                     # finish = Time.now()
                     # puts "Time to parse: #{(finish - start).total_milliseconds}"
 
                     yield tweet if include_tweet(tweet)
                 # FIXME: Replace/modify error handling to handle all
-                # message types. 
+                # message types.
                 # See TODO on top of file for all message types.
                 rescue exception
                     puts exception.inspect
@@ -115,13 +115,13 @@ module Twitter::Stream
                 end
             end
         end
-        
+
         def include_tweet(tweet : Twitter::Response::Tweet) : Bool
             (@include_retweets || !tweet.is_retweet?) &&
             (@include_quotes   || !tweet.is_quote?) &&
             (@include_replies  || !tweet.is_reply?)
         end
-        
+
         def params_check(follow, track)
             if follow && follow.size > 5000
                 raise "Cannot follow more than 5000 user ids"
@@ -129,11 +129,12 @@ module Twitter::Stream
                 raise "Cannot track more than 400 keywords"
             end
         end
-        
+
         # TODO: stream_as_strings
-        
+
         def post_stream(params)
-            @client.post("https://stream.twitter.com/1.1/statuses/filter.json?", form: params) do |response|
+          @client.post("https://stream.twitter.com/1.1/statuses/filter.json?",
+                       form: params) do |response|
               while !response.body_io.closed?
                 # FIXME: break these two lines up into better, readable steps
                 string = response.body_io.gets("\r\n")

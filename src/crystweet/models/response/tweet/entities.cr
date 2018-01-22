@@ -9,17 +9,17 @@ module Twitter::Response
             polls: Array(Poll)?
         })
     end
-    
+
     abstract struct Tag
         JSON.mapping({
             text: String,
             indices: Array(Int16)
         })
     end
-    
+
     struct Hashtag < Tag
     end
-    
+
     struct Media
         JSON.mapping({
             display_url: String,
@@ -35,10 +35,27 @@ module Twitter::Response
             source_user_id: UInt64?, # Not in docs
             source_user_id_str: String?, # Not in docs
             type: String,
-            url: String
+            url: String,
+            video_info: Media::VideoInfo?
         })
     end
-    
+
+    struct Media::VideoInfo
+      JSON.mapping({
+                     aspect_ratio: Array(UInt8),
+                     duration_millis: UInt32,
+                     variants: Array(Media::VideoVariant)
+                   })
+    end
+
+    struct Media::VideoVariant
+      JSON.mapping({
+                     bitrate: UInt32?,
+                     content_type: String,
+                     url: String
+                   })
+    end
+
     struct Media::Sizes
         JSON.mapping({
             thumb: Media::Size,
@@ -47,7 +64,7 @@ module Twitter::Response
             small: Media::Size
         })
     end
-    
+
     struct Media::Size
         JSON.mapping({
             h: Int32,
@@ -55,7 +72,7 @@ module Twitter::Response
             resize: String
         })
     end
-    
+
     # TODO: Expanded and/or Enhanced URL enrichments
     # https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/entities-object1#urls
     struct Url
@@ -66,7 +83,7 @@ module Twitter::Response
             url: String
         })
     end
-    
+
     struct UserMention
         JSON.mapping({
             id: UInt64,
@@ -76,10 +93,10 @@ module Twitter::Response
             indices: Array(Int16)
         })
     end
-    
+
     struct Symbol < Tag
     end
-    
+
     struct Poll
         JSON.mapping({
             options: Array(Poll::Option),
@@ -87,7 +104,7 @@ module Twitter::Response
             duration_minutes: String
         })
     end
-    
+
     struct Poll::Option
         JSON.mapping({
             position: Int16,

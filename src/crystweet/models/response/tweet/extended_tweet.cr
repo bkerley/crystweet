@@ -2,19 +2,20 @@ require "../tweet"
 
 module Twitter::Response
     struct ExtendedTweet
-    
+
         def is_top_level?
             true
         end
-        
+
         def is_nested?
             false
         end
-        
+
         JSON.mapping({
             full_text: String,
-            entities: Entities
-            
+            entities: Entities,
+            extended_entities: ExtendedEntities
+
             # TODO:
             # coordinates: Twitter::Coordinates | Nil,
             # current_user_retweet: ??, # Perspectival
